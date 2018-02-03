@@ -1,6 +1,7 @@
 package com.mymindsweeper.mymindsweeper.ui;
 
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -15,6 +16,7 @@ import com.google.android.gms.tasks.Task;
 import com.mymindsweeper.mymindsweeper.R;
 import com.mymindsweeper.mymindsweeper.sms.SMSText;
 import com.mymindsweeper.mymindsweeper.sms.SMSUtils;
+import com.mymindsweeper.mymindsweeper.utils.ScreenStatus;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,6 +49,11 @@ public class Home extends AppCompatActivity {
                 googleSignin(RC_GOOGLE_SIGN_UP);
             }
         });
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        ScreenStatus screenStatus = new ScreenStatus();
+        registerReceiver(screenStatus, filter);
         //googleSignin(RC_GOOGLE_UPLOAD_SMS);
     }
 
