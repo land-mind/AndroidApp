@@ -1,8 +1,5 @@
 package com.mymindsweeper.mymindsweeper.sms;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SMSText {
 
     private int thread_id;
