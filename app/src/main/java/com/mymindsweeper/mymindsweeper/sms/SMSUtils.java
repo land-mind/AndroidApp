@@ -22,10 +22,10 @@ public class SMSUtils {
     }
 
     //reads inbox and returns it as csv format
-    public static String readSMS(Activity activity) {
+    public static String readSMS(Activity activity, String uri) {
         StringBuilder allMsgs = new StringBuilder();
         if(ContextCompat.checkSelfPermission(activity.getBaseContext(), "android.permission.READ_SMS") == PackageManager.PERMISSION_GRANTED) {
-            Cursor cursor = activity.getContentResolver().query(Uri.parse(INBOX), null, null, null, null);
+            Cursor cursor = activity.getContentResolver().query(Uri.parse(uri), null, null, null, null);
             boolean succeeded = cursor.moveToFirst();
             if (succeeded) {
                 allMsgs.append(readSMSAtCursor(cursor) + '\n');
