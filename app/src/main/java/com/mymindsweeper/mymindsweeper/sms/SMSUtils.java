@@ -7,6 +7,9 @@ import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SMSUtils {
 
     public static final String INBOX = "content://sms/inbox";
@@ -21,27 +24,56 @@ public class SMSUtils {
         }
     }
 
-    //reads inbox and returns it as csv format
-    public static String readSMS(Activity activity, String uri) {
-        StringBuilder allMsgs = new StringBuilder();
+    //reads sms content and parses it and returns it as a list of SMSText
+    public static List<SMSText> readSMS(Activity activity, String uri) {
+        List<SMSText> messages = new ArrayList<>();
+        SMSText.SMSType type = null;
+        switch (uri) {
+            case INBOX: type = SMSText.SMSType.INBOX; break;
+            case SENT: type = SMSText.SMSType.SENT; break;
+            case DRAFT: type = SMSText.SMSType.DRAFT; break;
+        }
+
         if(ContextCompat.checkSelfPermission(activity.getBaseContext(), "android.permission.READ_SMS") == PackageManager.PERMISSION_GRANTED) {
             Cursor cursor = activity.getContentResolver().query(Uri.parse(uri), null, null, null, null);
             boolean succeeded = cursor.moveToFirst();
             if (succeeded) {
-                allMsgs.append(readSMSAtCursor(cursor) + '\n');
+                try {
+                    messages.add(readSMSAtCursor(cursor, type));
+                } catch (SMSException e) {
+                    System.out.println(e);
+                }
                 while (cursor.moveToNext()) {
-                    allMsgs.append(readSMSAtCursor(cursor) + '\n');
+                    try {
+                        messages.add(readSMSAtCursor(cursor, type));
+                    } catch (SMSException e) {
+                        System.out.println(e);
+                    }
                 }
             }
         }
-        return allMsgs.toString();
+        return messages;
     }
 
-    private static String readSMSAtCursor(Cursor cursor) {
-        StringBuilder msg = new StringBuilder();
+    private static SMSText readSMSAtCursor(Cursor cursor, SMSText.SMSType type) throws SMSException {
+        int thread_id = -1;
+        String phoneNumber = null;
+        long date = -1;
+        String body = null;
+        boolean read = false;
         for(int i = 0; i < cursor.getColumnCount(); i++) {
-            msg.append(cursor.getColumnName(i) + ":" + cursor.getString(i) + ',');
+            switch(cursor.getColumnName(i)) {
+                case "thread_id": thread_id = Integer.parseInt(cursor.getString(i)); break;
+                case "address": phoneNumber = cursor.getString(i); break;
+                case "date": date = Long.parseLong(cursor.getString(i)); break;
+                case "body": body = cursor.getString(i); break;
+                case "read": read = cursor.getString(i).equals("1");
+            }
         }
-        return msg.toString();
+
+        if(phoneNumber == null || thread_id == -1 || body == null)
+            throw new SMSException("Don't understand the sms format");
+
+        return new SMSText(thread_id, phoneNumber, date, body, read, type);
     }
 } 

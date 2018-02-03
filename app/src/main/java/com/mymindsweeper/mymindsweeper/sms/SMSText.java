@@ -5,11 +5,11 @@ import java.util.List;
 
 public class SMSText {
 
-    public int thread_id;
-    public String phoneNumber;
-    public long date;
-    public String body;
-    public boolean read;
+    private int thread_id;
+    private String phoneNumber;
+    private long date;
+    private String body;
+    private boolean read;
     private SMSType type;
 
     public enum SMSType {
@@ -18,35 +18,28 @@ public class SMSText {
         DRAFT
     }
 
-    public SMSText(String smsString, SMSType type) throws SMSException {
+    public SMSText(int thread_id, String phoneNumber, long date, String body, boolean read, SMSType type) {
         this.type = type;
-        thread_id = -1;
-        String[] values = smsString.split(",");
-        for(String v: values) {
-            String keyvaluepair[] = v.split(":");
-            switch(keyvaluepair[0]) {
-                case "thread_id": thread_id = Integer.parseInt(keyvaluepair[1]); break;
-                case "address": phoneNumber = keyvaluepair[1]; break;
-                case "date": date = Long.parseLong(keyvaluepair[1]); break;
-                case "body": body = keyvaluepair[1]; break;
-                case "read": read = keyvaluepair[1].equals("1");
-            }
-        }
-        if(phoneNumber == null || thread_id == -1)
-            throw new SMSException("Don't understand the sms format");
-
+        this.thread_id = thread_id;
+        this.phoneNumber = phoneNumber;
+        this.date = date;
+        this.body = body;
+        this.read = read;
     }
 
-    public static List<SMSText> stringToArray(String string, SMSType type) {
-        ArrayList<SMSText> smsTexts = new ArrayList<SMSText>();
-        String[] lines = string.split("\n");
-        for(String line: lines) {
-            try {
-                smsTexts.add(new SMSText(line, type));
-            } catch(SMSException e) {
-                System.out.println(e);
-            }
-        }
-        return smsTexts;
+    public int getThreadId() {
+        return thread_id;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public long getDate() {
+        return date;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 } 
