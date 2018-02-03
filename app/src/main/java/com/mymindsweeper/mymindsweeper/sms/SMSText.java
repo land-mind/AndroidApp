@@ -1,5 +1,7 @@
 package com.mymindsweeper.mymindsweeper.sms;
 
+import org.json.JSONObject;
+
 public class SMSText {
 
     private int thread_id;
@@ -39,4 +41,9 @@ public class SMSText {
     public String getPhoneNumber() {
         return phoneNumber;
     }
+
+    public SMSType getType() {
+        return type;
+    }
+
 } 

@@ -3,7 +3,6 @@ package com.mymindsweeper.mymindsweeper.ui;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -17,11 +16,12 @@ import com.mymindsweeper.mymindsweeper.R;
 import com.mymindsweeper.mymindsweeper.sms.SMSText;
 import com.mymindsweeper.mymindsweeper.sms.SMSUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -33,8 +33,9 @@ import java.util.stream.Collectors;
 
 public class Home extends AppCompatActivity {
 
-    public static final int RC_GOOGLE_SIGN_IN = 12;
-    public static final String SERVER_GOOGLE_CLIENT_ID = "263280707472-o46anofpr2aoc3aslltgeaegjg3qpqlp.apps.googleusercontent.com";
+    public static final int RC_GOOGLE_SIGN_UP = 1;
+    public static final int RC_GOOGLE_UPLOAD_SMS = 2;
+    public static final String SERVER_HOST = "http://d55362d4.ngrok.io";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,17 +44,60 @@ public class Home extends AppCompatActivity {
         findViewById(R.id.sign_in_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                googleSignin();
+                googleSignin(RC_GOOGLE_SIGN_UP);
             }
         });
+        //googleSignin(RC_GOOGLE_UPLOAD_SMS);
     }
 
-    public void POST(String server) {
+    public void uploadSMS(String token) {
+        Map<Integer, List<SMSText>> threads = getAllSMSThreads();
+        for(Integer threadId: threads.keySet()) {
+            JSONObject req = new JSONObject();
+            try {
+                req.put("token", token);
+            } catch (JSONException e) {
+
+            }
+            List<SMSText> thread = threads.get(threadId).stream().sorted(Comparator.comparing(SMSText::getDate)).collect(Collectors.toList());
+            //get 2nd number because android may reformat the phone number after the first message
+            String phoneNumber;
+            if(thread.size() > 1)
+                phoneNumber = thread.get(1).getPhoneNumber();
+            else
+                phoneNumber = thread.get(0).getPhoneNumber();
+            JSONArray smsList = new JSONArray();
+            for(SMSText text: thread) {
+                JSONObject textJSON = new JSONObject();
+                try {
+                    textJSON.put("body", text.getBody());
+                    textJSON.put("date", text.getDate());
+                    if(text.getType() == SMSText.SMSType.INBOX)
+                        textJSON.put("user_speaking", false);
+                    else if(text.getType() == SMSText.SMSType.SENT)
+                        textJSON.put("user_speaking", true);
+                    smsList.put(textJSON);
+                } catch (JSONException e) {
+
+                }
+            }
+
+            try {
+                req.put("thread_id", threadId.intValue());
+                req.put("person", phoneNumber);
+                req.put("sms_list", smsList);
+            } catch (JSONException e) {
+                System.out.println(e);
+            }
+            POST(SERVER_HOST + "/upload-sms", req);
+        }
+    }
+
+    public void POST(String server, JSONObject jsonParam) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    System.out.println("run");
                     URL url = new URL(server);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");
@@ -61,9 +105,6 @@ public class Home extends AppCompatActivity {
                     conn.setRequestProperty("Accept", "application/json");
                     conn.setDoOutput(true);
                     conn.setDoInput(true);
-
-                    JSONObject jsonParam = new JSONObject();
-                    jsonParam.put("token", "what ever");
 
                     DataOutputStream os = new DataOutputStream(conn.getOutputStream());
 
@@ -92,20 +133,27 @@ public class Home extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-        if (requestCode == RC_GOOGLE_SIGN_IN) {
-            // The Task returned from this call is always completed, no need to attach
-            // a listener.
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            handleSignInResult(task);
-        }
+
+        // The Task returned from this call is always completed, no need to attach
+        // a listener.
+        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+        handleSignInResult(task, requestCode);
     }
 
-    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask, int requestCode) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            System.out.println(account.getDisplayName());
-            System.out.println(account.getIdToken());
-            System.out.println(account.getEmail());
+            if (requestCode == RC_GOOGLE_SIGN_UP) {
+                JSONObject json = new JSONObject();
+                try {
+                    json.put("token", account.getIdToken());
+                } catch (JSONException e) {
+                    System.out.println(e);
+                }
+                POST(SERVER_HOST + "/create-account", json);
+            } else if(requestCode == RC_GOOGLE_UPLOAD_SMS) {
+                uploadSMS(account.getIdToken());
+            }
             // Signed in successfully, show authenticated UI.
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
@@ -114,23 +162,18 @@ public class Home extends AppCompatActivity {
         }
     }
 
-    public void googleSignin() {
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if(account == null || account.getIdToken() == null) {
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestEmail()
-                    .requestIdToken(getString(R.string.server_client_id))
-                    .build();
-            GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+    public void googleSignin(int action) {
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestIdToken(getString(R.string.server_client_id))
+                .build();
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-            Intent signInIntent = googleSignInClient.getSignInIntent();
-            startActivityForResult(signInIntent, RC_GOOGLE_SIGN_IN);
-        } else {
-            System.out.println(account.getIdToken());
-        }
+        Intent signInIntent = googleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, action);
     }
 
-    public void getAllSMSThreads() {
+    public Map<Integer, List<SMSText>> getAllSMSThreads() {
         SMSUtils.initREAD_SMS(this);
 
         List<SMSText> inboxTexts = SMSUtils.readSMS(this, SMSUtils.INBOX);
@@ -143,11 +186,7 @@ public class Home extends AppCompatActivity {
 
         //group text by their thread ids
         Map<Integer, List<SMSText>> threads = allMsgs.stream().collect(Collectors.groupingBy(SMSText::getThreadId));
-
-        List<SMSText> exampleTextThread = threads.get(1).stream().sorted(Comparator.comparing(SMSText::getDate)).collect(Collectors.toList());
-        for(SMSText text: exampleTextThread) {
-            System.out.println(text.getDate() + ":" + text.getBody());
-        }
+        return threads;
     }
 
 }
