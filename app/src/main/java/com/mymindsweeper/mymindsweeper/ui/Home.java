@@ -1,12 +1,12 @@
 package com.mymindsweeper.mymindsweeper.ui;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -50,7 +50,9 @@ public class Home extends AppCompatActivity {
         findViewById(R.id.sign_in_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //findViewById(R.id.sign_in_button).setVisibility(View.GONE);
                 googleSignin(RC_GOOGLE_SIGN_UP);
+                googleSignin(RC_GOOGLE_UPLOAD_SMS);
             }
         });
         IntentFilter filter = new IntentFilter();
@@ -166,6 +168,8 @@ public class Home extends AppCompatActivity {
                 POST(SERVER_HOST + "/create-account", json);
             } else if(requestCode == RC_GOOGLE_UPLOAD_SMS) {
                 uploadSMS(account.getIdToken());
+                findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+                Toast.makeText(this.getApplicationContext(), "Loading SMS Messages to server", Toast.LENGTH_SHORT).show();
             }
             // Signed in successfully, show authenticated UI.
         } catch (ApiException e) {
