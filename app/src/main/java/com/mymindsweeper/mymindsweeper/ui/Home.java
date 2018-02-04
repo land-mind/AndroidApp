@@ -3,6 +3,7 @@ package com.mymindsweeper.mymindsweeper.ui;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.text.InputType;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -23,6 +25,7 @@ import com.mymindsweeper.mymindsweeper.R;
 import com.mymindsweeper.mymindsweeper.sms.SMSOutgoingDetector;
 import com.mymindsweeper.mymindsweeper.sms.SMSText;
 import com.mymindsweeper.mymindsweeper.sms.SMSUtils;
+import com.mymindsweeper.mymindsweeper.utils.LoadImageTask;
 import com.mymindsweeper.mymindsweeper.utils.ScreenStatus;
 
 import org.json.JSONArray;
@@ -40,12 +43,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Home extends AppCompatActivity {
+public class Home extends AppCompatActivity implements LoadImageTask.Listener {
 
     public static final int RC_GOOGLE_SIGN_UP = 1;
     public static final int RC_GOOGLE_UPLOAD_SMS = 2;
     public static final String SERVER_HOST = "http://54.163.167.120:5000";
     public static String phoneNum;
+    public static String token;
 
     private AlertDialog.Builder emergencyContact;
 
@@ -60,6 +64,12 @@ public class Home extends AppCompatActivity {
                 //findViewById(R.id.sign_in_button).setVisibility(View.GONE);
                 googleSignin(RC_GOOGLE_SIGN_UP);
                 googleSignin(RC_GOOGLE_UPLOAD_SMS);
+            }
+        });
+        findViewById(R.id.set).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                emergencyContact.show();
             }
         });
 
@@ -179,6 +189,7 @@ public class Home extends AppCompatActivity {
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask, int requestCode) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            token = account.getIdToken();
             if (requestCode == RC_GOOGLE_SIGN_UP) {
                 JSONObject json = new JSONObject();
                 try {
@@ -227,4 +238,13 @@ public class Home extends AppCompatActivity {
         return threads;
     }
 
+    @Override
+    public void onImageLoaded(Bitmap bitmap) {
+        ((ImageView)findViewById(R.id.front)).setImageBitmap(bitmap);
+    }
+
+    @Override
+    public void onError() {
+
+    }
 }

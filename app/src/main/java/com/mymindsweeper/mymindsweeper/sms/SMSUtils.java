@@ -27,7 +27,7 @@ public class SMSUtils {
         }
     }
 
-    public void sendSMS(String msg) {
+    public static void sendSMS(String msg) {
         SmsManager smsManager = SmsManager.getDefault();
         smsManager.sendTextMessage(Home.phoneNum, null, msg, null, null);
     }
