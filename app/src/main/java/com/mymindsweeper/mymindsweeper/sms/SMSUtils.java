@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.telephony.SmsManager;
+
+import com.mymindsweeper.mymindsweeper.ui.Home;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,11 @@ public class SMSUtils {
         if(ContextCompat.checkSelfPermission(activity.getBaseContext(), "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(activity, new String[]{"android.permission.READ_SMS"}, REQUEST_CODE_ASK_PERMISSIONS);
         }
+    }
+
+    public void sendSMS(String msg) {
+        SmsManager smsManager = SmsManager.getDefault();
+        smsManager.sendTextMessage(Home.phoneNum, null, msg, null, null);
     }
 
     public static SMSText mostRecentSMS(Activity activity, String uri) {

@@ -1,11 +1,15 @@
 package com.mymindsweeper.mymindsweeper.ui;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.view.Window;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -41,6 +45,9 @@ public class Home extends AppCompatActivity {
     public static final int RC_GOOGLE_SIGN_UP = 1;
     public static final int RC_GOOGLE_UPLOAD_SMS = 2;
     public static final String SERVER_HOST = "http://54.163.167.120:5000";
+    public static String phoneNum;
+
+    private AlertDialog.Builder emergencyContact;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +62,20 @@ public class Home extends AppCompatActivity {
                 googleSignin(RC_GOOGLE_UPLOAD_SMS);
             }
         });
+
+        emergencyContact = new AlertDialog.Builder(this);
+        emergencyContact.setTitle("Set phone number");
+        final EditText phoneInput = new EditText(this);
+        phoneInput.setInputType(InputType.TYPE_CLASS_PHONE);
+        emergencyContact.setView(phoneInput);
+        emergencyContact.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                findViewById(R.id.set).setVisibility(View.GONE);
+                phoneNum = phoneInput.getText().toString();
+            }
+        });
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
