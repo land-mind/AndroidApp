@@ -19,7 +19,9 @@
             </intent-filter>
         </receiver>
         <receiver android:name=".utils.ScreenStatus" ></receiver>
-        <activity android:name=".ui.Home">
+        <activity
+            android:name=".ui.Home"
+            android:theme="@style/AppFullScreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

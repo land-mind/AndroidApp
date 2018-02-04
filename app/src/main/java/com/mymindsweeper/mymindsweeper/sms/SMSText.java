@@ -46,4 +46,9 @@ public class SMSText {
         return type;
     }
 
+    @Override
+    public String toString() {
+        return phoneNumber + "," + date + "," + body;
+    }
+
 } 

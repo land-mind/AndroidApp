@@ -1,10 +1,12 @@
 package com.mymindsweeper.mymindsweeper.ui;
 
+import android.app.ActionBar;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -14,6 +16,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.mymindsweeper.mymindsweeper.R;
+import com.mymindsweeper.mymindsweeper.sms.SMSOutgoingDetector;
 import com.mymindsweeper.mymindsweeper.sms.SMSText;
 import com.mymindsweeper.mymindsweeper.sms.SMSUtils;
 import com.mymindsweeper.mymindsweeper.utils.ScreenStatus;
@@ -37,11 +40,12 @@ public class Home extends AppCompatActivity {
 
     public static final int RC_GOOGLE_SIGN_UP = 1;
     public static final int RC_GOOGLE_UPLOAD_SMS = 2;
-    public static final String SERVER_HOST = "http://d55362d4.ngrok.io";
+    public static final String SERVER_HOST = "http://54.163.167.120:5000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_home);
         findViewById(R.id.sign_in_button).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,7 +58,9 @@ public class Home extends AppCompatActivity {
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         ScreenStatus screenStatus = new ScreenStatus();
         registerReceiver(screenStatus, filter);
-        //googleSignin(RC_GOOGLE_UPLOAD_SMS);
+
+        SMSOutgoingDetector smsod = new SMSOutgoingDetector(this);
+        smsod.start();
     }
 
     public void uploadSMS(String token) {

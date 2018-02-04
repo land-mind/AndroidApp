@@ -24,6 +24,27 @@ public class SMSUtils {
         }
     }
 
+    public static SMSText mostRecentSMS(Activity activity, String uri) {
+        if(ContextCompat.checkSelfPermission(activity.getBaseContext(), "android.permission.READ_SMS") == PackageManager.PERMISSION_GRANTED) {
+            Cursor cursor = activity.getContentResolver().query(Uri.parse(uri), null, null, null, null);
+            SMSText.SMSType type = null;
+            switch (uri) {
+                case INBOX: type = SMSText.SMSType.INBOX; break;
+                case SENT: type = SMSText.SMSType.SENT; break;
+                case DRAFT: type = SMSText.SMSType.DRAFT; break;
+            }
+            boolean succeeded = cursor.moveToFirst();
+            if(succeeded) {
+                try {
+                    return readSMSAtCursor(cursor, type);
+                } catch (SMSException e) {
+
+                }
+            }
+        }
+        return null;
+    }
+
     //reads sms content and parses it and returns it as a list of SMSText
     public static List<SMSText> readSMS(Activity activity, String uri) {
         List<SMSText> messages = new ArrayList<>();
