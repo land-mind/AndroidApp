@@ -17,8 +17,10 @@
         android:gravity="center">
         <ImageView
             android:id="@+id/front"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
             android:src="@drawable/small_logo"/>
         <Button
             android:id="@+id/set"

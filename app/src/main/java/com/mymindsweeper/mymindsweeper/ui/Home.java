@@ -62,7 +62,7 @@ public class Home extends AppCompatActivity implements LoadImageTask.Listener {
             @Override
             public void onClick(View v) {
                 //findViewById(R.id.sign_in_button).setVisibility(View.GONE);
-                googleSignin(RC_GOOGLE_SIGN_UP);
+                //googleSignin(RC_GOOGLE_SIGN_UP);
                 googleSignin(RC_GOOGLE_UPLOAD_SMS);
             }
         });
@@ -202,6 +202,17 @@ public class Home extends AppCompatActivity implements LoadImageTask.Listener {
                 uploadSMS(account.getIdToken());
                 findViewById(R.id.sign_in_button).setVisibility(View.GONE);
                 Toast.makeText(this.getApplicationContext(), "Loading SMS Messages to server", Toast.LENGTH_SHORT).show();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+
+                        }
+                        new LoadImageTask(Home.this).execute("http://mymindsweeper.com:5000/image");
+                    }
+                }).start();
             }
             // Signed in successfully, show authenticated UI.
         } catch (ApiException e) {
